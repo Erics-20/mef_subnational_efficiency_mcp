@@ -1,0 +1,73 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# === Entornos virtuales ===
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# === Variables de entorno / secretos ===
+.env
+.env.*
+*.key
+
+# === Datos pesados (NO subir datasets crudos del portal) ===
+# Regla crítica 1: nada de CSV/JSON crudos (>200MB) en el repo
+data/raw_pdfs/*
+data/processed/*
+data/snapshots/*
+*.csv
+*.parquet
+*.feather
+*.json.gz
+
+# Mantener la estructura de carpetas vacías en Git
+!data/raw_pdfs/.gitkeep
+!data/snapshots/.gitkeep
+!data/processed/.gitkeep
+
+# === PaddleOCR (modelos descargados / cache) ===
+.paddleocr/
+*.pdmodel
+*.pdiparams
+inference/
+output/
+
+# === Streamlit ===
+.streamlit/secrets.toml
+
+# === Jupyter / notebooks ===
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# === Logs / temporales ===
+*.log
+logs/
+tmp/
+.cache/
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Claude Code (local state, no las definiciones de skills) ===
+.claude/cache/
+.claude/logs/
+# OJO: NO ignorar .claude/skills/ — esos .json son entregables obligatorios
