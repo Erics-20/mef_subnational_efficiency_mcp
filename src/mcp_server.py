@@ -17,7 +17,7 @@ from typing import Any
 import httpx
 from mcp.server.fastmcp import FastMCP
 
-from src.utils import get_logger
+from .utils import get_logger
 
 # ── Constantes ─────────────────────────────────────────────────────────────
 BASE_URL = "https://www.datosabiertos.gob.pe"
