@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mef-datos-abiertos": {
+      "type": "stdio",
+      "command": "/opt/miniconda3/envs/mef_subnacional/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server"
+      ],
+      "cwd": "/Users/macbookair/Documents/GitHub/mef_subnational_efficiency_mcp",
+      "env": {}
+    }
+  }
+}
