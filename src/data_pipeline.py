@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from datetime import datetime
@@ -257,6 +258,24 @@ def _agg_metrics(df: pl.DataFrame) -> pl.DataFrame:
     ])
 
 
+# ── Atomic write ────────────────────────────────────────────────────────────
+
+def _write_parquet_atomic(df: pl.DataFrame, dest: Path) -> None:
+    """Escribe un Parquet de forma atómica: tmp → os.replace → dest.
+
+    os.replace en el mismo filesystem es atómico: los lectores (dashboard,
+    analytical_engine) ven siempre el archivo anterior completo o el nuevo
+    completo, nunca un estado intermedio a mitad de escritura.
+    """
+    tmp = dest.with_suffix(".parquet.tmp")
+    try:
+        df.write_parquet(tmp)
+        os.replace(tmp, dest)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
 # ── Output generation ────────────────────────────────────────────────────────
 
 def generate_outputs(df: pl.DataFrame, period_label: str) -> dict[str, int]:
@@ -278,7 +297,7 @@ def generate_outputs(df: pl.DataFrame, period_label: str) -> dict[str, int]:
         "num_departamentos":    [df["DEPARTAMENTO_EJECUTORA_NOMBRE"].n_unique()],
     })
     out = PROCESSED / "resumen_nacional.parquet"
-    resumen.write_parquet(out)
+    _write_parquet_atomic(resumen, out)
     sizes["resumen_nacional"] = out.stat().st_size
     logger.info("resumen_nacional.parquet → %d bytes", sizes["resumen_nacional"])
 
@@ -290,7 +309,7 @@ def generate_outputs(df: pl.DataFrame, period_label: str) -> dict[str, int]:
         .sort("avance_pct", nulls_last=True)
     )
     out = PROCESSED / "por_departamento.parquet"
-    por_depto.write_parquet(out)
+    _write_parquet_atomic(por_depto, out)
     sizes["por_departamento"] = out.stat().st_size
     logger.info("por_departamento.parquet → %d bytes  (%d deptos)", sizes["por_departamento"], len(por_depto))
 
@@ -304,7 +323,7 @@ def generate_outputs(df: pl.DataFrame, period_label: str) -> dict[str, int]:
         .sort("avance_pct", nulls_last=True)
     )
     out = PROCESSED / "hall_of_shame.parquet"
-    hall.write_parquet(out)
+    _write_parquet_atomic(hall, out)
     sizes["hall_of_shame"] = out.stat().st_size
     logger.info("hall_of_shame.parquet → %d bytes  (%d ejecutoras)", sizes["hall_of_shame"], len(hall))
 
@@ -316,7 +335,7 @@ def generate_outputs(df: pl.DataFrame, period_label: str) -> dict[str, int]:
         .sort("avance_pct", nulls_last=True)
     )
     out = PROCESSED / "por_funcion.parquet"
-    por_func.write_parquet(out)
+    _write_parquet_atomic(por_func, out)
     sizes["por_funcion"] = out.stat().st_size
     logger.info("por_funcion.parquet → %d bytes  (%d funciones)", sizes["por_funcion"], len(por_func))
 
