@@ -1,1 +1,45 @@
-{"name":"executor_skill","description":"TODO"}
+{
+  "name": "executor_skill",
+  "description": "Skill constructor del pipeline de datos MEF. Lee esquema del portal vía MCP, dispara el pipeline y genera los 4 Parquets analíticos en data/processed/.",
+  "version": "1.0.0",
+  "role": "constructor",
+  "trigger_phrases": [
+    "corre el executor",
+    "procesa el periodo",
+    "actualiza los datos",
+    "regenera los parquets",
+    "ejecuta el pipeline"
+  ],
+  "cli_entrypoint": "python -m src.run_skill executor --periodo <PERIODO>",
+  "periodos_validos": ["2025", "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4", "2025-01..2025-12"],
+  "responsibilities": [
+    "Leer esquema del CSV vía MCP tools (buscar_datasets, inspeccionar_esquema_csv)",
+    "Descargar el CSV de Gasto Devengado Mensual 2025 (2.66 GB, con caché)",
+    "Filtrar gobierno subnacional (NIVEL_GOBIERNO IN ['R','M']) via DuckDB",
+    "Proyectar solo las columnas necesarias de las 73 disponibles",
+    "Calcular avance_pct y saldo_no_devengado por fila",
+    "Generar 4 Parquets microscópicos en data/processed/",
+    "Verificar que los Parquets son legibles y no corruptos"
+  ],
+  "outputs": {
+    "resumen_nacional.parquet": "KPIs nacionales agregados (1 fila): PIM, devengado, avance %, saldo, num_ejecutoras, num_departamentos",
+    "por_departamento.parquet": "Agrupado por los 25 departamentos del Perú",
+    "hall_of_shame.parquet": "Ejecutoras con PIM > S/ 10M ordenadas por avance % ascendente",
+    "por_funcion.parquet": "Agrupado por las 23 funciones de gasto presupuestal"
+  },
+  "scripts": {
+    "entrypoint": "src/run_skill.py",
+    "pipeline_core": "src/data_pipeline.py",
+    "analytics_layer": "src/analytical_engine.py"
+  },
+  "mcp_tools_used": [
+    "mef-datos-abiertos/buscar_datasets",
+    "mef-datos-abiertos/inspeccionar_esquema_csv"
+  ],
+  "does_not": [
+    "Auditar ni validar los datos generados",
+    "Modificar app.py o cualquier código fuente",
+    "Generar qa_report.md"
+  ],
+  "skill_md_path": ".claude/skills/executor/SKILL.md"
+}

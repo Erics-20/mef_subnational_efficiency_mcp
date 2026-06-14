@@ -257,7 +257,7 @@ with tab1:
                     showarrow=False,
                 )],
             )
-            st.plotly_chart(fig_donut, use_container_width=True)
+            st.plotly_chart(fig_donut, width="stretch")
 
         with col_info:
             st.markdown("### Resumen ejecutivo")
@@ -330,7 +330,7 @@ with tab2:
             margin=dict(t=50, b=30, l=left_margin, r=90),
             plot_bgcolor="white",
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
         st.markdown("---")
         st.markdown("#### Tabla detallada por departamento")
@@ -358,7 +358,7 @@ with tab2:
         table_height = min(700, max(380, n_rows * 38 + 42))
         st.dataframe(
             display_df.sort_values("Departamento"),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=table_height,
         )
@@ -427,7 +427,7 @@ with tab3:
             margin=dict(t=50, b=30, l=20, r=20),
             plot_bgcolor="white",
         )
-        st.plotly_chart(fig_shame, use_container_width=True)
+        st.plotly_chart(fig_shame, width="stretch")
 
         st.markdown("---")
         st.markdown("#### Tabla completa de ejecutoras")
@@ -455,7 +455,7 @@ with tab3:
                 lambda v: f"{v:.1f}%" if pd.notna(v) else "—"
             )
 
-        st.dataframe(display_hall, use_container_width=True, hide_index=True, height=460)
+        st.dataframe(display_hall, width="stretch", hide_index=True, height=460)
 
 
 # ════════════════════════════════════════════════════════════════════════════
