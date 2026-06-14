@@ -30,15 +30,38 @@ def _missing(name: str) -> None:
     )
 
 
+def _read_parquet_safe(name: str) -> pl.DataFrame | None:
+    """Lee un Parquet con manejo de archivo corrupto o en regeneración.
+
+    Devuelve None (en lugar de propagar la excepción) si el archivo no existe
+    o está corrupto — por ejemplo, si el pipeline está escribiendo en ese momento.
+    Con escritura atómica en data_pipeline esto ya no debería ocurrir, pero
+    esta capa defensiva evita que el dashboard crashee en cualquier caso borde.
+    """
+    p = _parquet_path(name)
+    if not p.exists():
+        _missing(name)
+        return None
+    try:
+        return pl.read_parquet(p)
+    except Exception as exc:
+        logger.warning(
+            "Parquet '%s' no se pudo leer (%s). "
+            "Puede estar en regeneración — reintenta en unos segundos.",
+            name,
+            exc,
+        )
+        return None
+
+
 # ── Public loaders ──────────────────────────────────────────────────────────
 
 def load_resumen_nacional() -> dict | None:
-    """Devuelve dict con KPIs nacionales o None si el Parquet no existe."""
-    p = _parquet_path("resumen_nacional")
-    if not p.exists():
-        _missing("resumen_nacional")
+    """Devuelve dict con KPIs nacionales o None si el Parquet no existe o está en regeneración."""
+    df = _read_parquet_safe("resumen_nacional")
+    if df is None:
         return None
-    row = pl.read_parquet(p).row(0, named=True)
+    row = df.row(0, named=True)
     return {
         "periodo":             row.get("periodo", "2025"),
         "total_pim":           row.get("total_pim", 0.0) or 0.0,
@@ -52,11 +75,7 @@ def load_resumen_nacional() -> dict | None:
 
 def load_por_departamento() -> pl.DataFrame | None:
     """DataFrame con PIM, devengado, avance %, saldo por departamento."""
-    p = _parquet_path("por_departamento")
-    if not p.exists():
-        _missing("por_departamento")
-        return None
-    return pl.read_parquet(p)
+    return _read_parquet_safe("por_departamento")
 
 
 def load_hall_of_shame(
@@ -71,11 +90,9 @@ def load_hall_of_shame(
         top_n:        Limitar a las N peores. None = todas.
         departamento: Filtrar por nombre de departamento. None = todos.
     """
-    p = _parquet_path("hall_of_shame")
-    if not p.exists():
-        _missing("hall_of_shame")
+    df = _read_parquet_safe("hall_of_shame")
+    if df is None:
         return None
-    df = pl.read_parquet(p)
 
     if min_pim != 10_000_000:
         df = df.filter(pl.col("MONTO_PIM") >= min_pim)
@@ -93,8 +110,4 @@ def load_hall_of_shame(
 
 def load_por_funcion() -> pl.DataFrame | None:
     """DataFrame con PIM, devengado, avance %, saldo por función."""
-    p = _parquet_path("por_funcion")
-    if not p.exists():
-        _missing("por_funcion")
-        return None
-    return pl.read_parquet(p)
+    return _read_parquet_safe("por_funcion")

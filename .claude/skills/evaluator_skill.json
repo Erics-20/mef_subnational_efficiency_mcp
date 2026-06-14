@@ -1,1 +1,56 @@
-{"name":"evaluator_skill","description":"TODO"}
+{
+  "name": "evaluator_skill",
+  "description": "Skill auditor de calidad (QA). Lee los Parquets existentes, ejecuta 8 verificaciones de integridad y genera data/processed/qa_report.md que el Tab 4 del dashboard muestra.",
+  "version": "1.0.0",
+  "role": "auditor",
+  "trigger_phrases": [
+    "corre el evaluador",
+    "genera el reporte QA",
+    "audita los datos",
+    "verifica los parquets",
+    "chequea la integridad",
+    "verifica los 25 departamentos"
+  ],
+  "cli_entrypoint": "python -m src.run_skill evaluator",
+  "responsibilities": [
+    "Cargar los 4 Parquets vía src/analytical_engine.py (no toca el CSV gigante)",
+    "Verificar completitud territorial: 25 departamentos presentes",
+    "Verificar rango de avance % en [0%, 100%]",
+    "Verificar consistencia PIM vs Devengado (sin PIM=0 con devengado>0)",
+    "Detectar nulos en columnas clave",
+    "Confirmar que hall_of_shame solo incluye ejecutoras con PIM > S/ 10M",
+    "Detectar ejecutoras duplicadas en hall_of_shame",
+    "Cuadrar suma de departamentos con el resumen nacional (±1% tolerancia)",
+    "Calcular cobertura del hall_of_shame (capital paralizado total)",
+    "Generar data/processed/qa_report.md con el reporte detallado"
+  ],
+  "checks": [
+    {"id": 1, "nombre": "Completitud territorial", "detecta": "Departamentos faltantes de los 25 esperados"},
+    {"id": 2, "nombre": "Rango avance %", "detecta": "Valores < 0% o > 100%"},
+    {"id": 3, "nombre": "Consistencia PIM/Devengado", "detecta": "PIM=0 con devengado positivo; devengado > PIM"},
+    {"id": 4, "nombre": "Nulos en columnas clave", "detecta": "Campos críticos con NULL"},
+    {"id": 5, "nombre": "Umbral Hall of Shame", "detecta": "Ejecutoras con PIM ≤ S/ 10M infiltradas"},
+    {"id": 6, "nombre": "Duplicados de ejecutora", "detecta": "Nombres de ejecutora repetidos"},
+    {"id": 7, "nombre": "Cuadratura nacional", "detecta": "Discrepancia entre suma de deptos y total nacional"},
+    {"id": 8, "nombre": "Cobertura Hall of Shame", "detecta": "Capital paralizado acumulado"}
+  ],
+  "semaforo": {
+    "PASS": "Verificación superada sin anomalías",
+    "WARN": "Anomalía menor que no invalida los datos",
+    "FAIL": "Anomalía grave que requiere revisión del pipeline"
+  },
+  "output": {
+    "path": "data/processed/qa_report.md",
+    "leido_por": "app.py Tab 4 — Reporte de Calidad / QA"
+  },
+  "scripts": {
+    "entrypoint": "src/run_skill.py",
+    "analytics_layer": "src/analytical_engine.py"
+  },
+  "does_not": [
+    "Re-procesar el CSV ni regenerar los Parquets",
+    "Modificar datos — solo lee y reporta",
+    "Modificar app.py u otro código fuente"
+  ],
+  "skill_md_path": ".claude/skills/evaluator/SKILL.md"
+}
